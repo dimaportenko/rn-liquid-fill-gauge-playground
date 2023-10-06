@@ -1,9 +1,10 @@
 import { View, Text } from "react-native";
+import { LiquidGuage } from "../../components/LiquidGuage";
 
 export default function HomeScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Home Screen</Text>
+    <View className="flex-1">
+      <LiquidGuage />
     </View>
   );
 }
