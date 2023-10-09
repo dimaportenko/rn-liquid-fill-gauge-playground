@@ -1,5 +1,5 @@
-import { Canvas, Group, Path, Skia } from "@shopify/react-native-skia";
-import { arc, scaleLinear } from "d3";
+import { Canvas, Circle, Group, Path, Skia } from "@shopify/react-native-skia";
+import { arc, area, scaleLinear } from "d3";
 import { View, Text } from "react-native";
 
 export type GaugeConfig = {
@@ -50,7 +50,12 @@ function liquidFillGaugeDefaultSettings(): GaugeConfig {
   };
 }
 
-type Props = { config?: Partial<GaugeConfig>; width?: number; height?: number };
+type Props = {
+  config?: Partial<GaugeConfig>;
+  width?: number;
+  height?: number;
+  value?: number;
+};
 //
 // var gaugeGroup = gauge.append("g")
 //     .attr('transform','translate('+locationX+','+locationY+')');
@@ -72,17 +77,82 @@ type Props = { config?: Partial<GaugeConfig>; width?: number; height?: number };
 // const wavePath = lineGenerator(d3Points);
 // return `${wavePath} L ${size}, ${size} 0, ${size} Z`;
 
-export const LiquidGuage = ({ config, width = 200, height = 200 }: Props) => {
+// // The clipping wave area.
+// var clipArea = d3.svg.area()
+//     .x(function(d) { return waveScaleX(d.x); } )
+//     .y0(function(d) { return waveScaleY(Math.sin(Math.PI*2*config.waveOffset*-1 + Math.PI*2*(1-config.waveCount) + d.y*2*Math.PI));} )
+//     .y1(function(d) { return (fillCircleRadius*2 + waveHeight); } );
+// var waveGroup = gaugeGroup.append("defs")
+//     .append("clipPath")
+//     .attr("id", "clipWave" + elementId);
+// var wave = waveGroup.append("path")
+//     .datum(data)
+//     .attr("d", clipArea)
+//     .attr("T", 0);
+//
+// // The inner circle with the clipping wave attached.
+// var fillCircleGroup = gaugeGroup.append("g")
+//     .attr("clip-path", "url(#clipWave" + elementId + ")");
+// fillCircleGroup.append("circle")
+//     .attr("cx", radius)
+//     .attr("cy", radius)
+//     .attr("r", fillCircleRadius)
+//     .style("fill", config.waveColor);
+//
+// var waveGroupXPosition = fillCircleMargin+fillCircleRadius*2-waveClipWidth;
+//
+// waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
+
+export const LiquidGuage = ({
+  config,
+  width = 200,
+  height = 200,
+  value = 50,
+}: Props) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };
 
+  var fillPercent =
+    Math.max(mergedConfig.minValue, Math.min(mergedConfig.maxValue, value)) /
+    mergedConfig.maxValue;
+  var waveHeightScale;
+  if (mergedConfig.waveHeightScaling) {
+    waveHeightScale = scaleLinear()
+      .range([0, mergedConfig.waveHeight, 0])
+      .domain([0, 50, 100]);
+  } else {
+    waveHeightScale = scaleLinear()
+      .range([mergedConfig.waveHeight, mergedConfig.waveHeight])
+      .domain([0, 100]);
+  }
+
   var radius = Math.min(width, height) / 2;
   var circleThickness = mergedConfig.circleThickness * radius;
+
+  var waveClipCount = 1 + mergedConfig.waveCount;
+  var circleFillGap = mergedConfig.circleFillGap * radius;
+  var fillCircleMargin = circleThickness + circleFillGap;
+  var fillCircleRadius = radius - fillCircleMargin;
+  var waveLength = (fillCircleRadius * 2) / mergedConfig.waveCount;
+  var waveClipWidth = waveLength * waveClipCount;
+  var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
+
+  // Data for building the clip wave area.
+  var data = [];
+  for (var i = 0; i <= 40 * waveClipCount; i++) {
+    data.push({ x: i / (40 * waveClipCount), y: i / 40 });
+  }
 
   const gaugeCircleX = scaleLinear()
     .range([0, 2 * Math.PI])
     .domain([0, 1]);
   const gaugeCircleY = scaleLinear().range([0, radius]).domain([0, radius]);
+
+  const waveScaleX = scaleLinear().range([0, waveClipWidth]).domain([0, 1]);
+  var waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
+
+  var waveRiseScale = scaleLinear();
+
   const gaugeCircleArc = arc()
     .startAngle(gaugeCircleX(0))
     .endAngle(gaugeCircleX(1))
@@ -92,15 +162,69 @@ export const LiquidGuage = ({ config, width = 200, height = 200 }: Props) => {
   // console.log("arc", gaugeCircleArc());
   const gaugeCircleArcPath = Skia.Path.MakeFromSVGString(gaugeCircleArc())!;
 
+  const clipArea = area()
+    .x(function (d) {
+      return waveScaleX(d.x);
+    })
+    .y0(function (d) {
+      return waveScaleY(
+        Math.sin(
+          Math.PI * 2 * mergedConfig.waveOffset * -1 +
+            Math.PI * 2 * (1 - mergedConfig.waveCount) +
+            d.y * 2 * Math.PI,
+        ),
+      );
+    })
+    .y1(function (d) {
+      return fillCircleRadius * 2 + waveHeight;
+    });
+  const clipPath = Skia.Path.MakeFromSVGString(clipArea(data))!;
+  const clipTraslateY = waveRiseScale(fillPercent);
+
+  // const clipAreaPath = Skia.Path.MakeFromSVGString(clipArea())!;
+  var waveGroupXPosition =
+    fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
+  // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
+
   return (
-    <View className="flex-1 items-center justify-center bg-red-300">
+    <View className="flex-1 items-center justify-center">
       <Canvas style={{ width, height }}>
         <Group>
-          <Path 
-            path={gaugeCircleArcPath} 
+          <Path
+            path={gaugeCircleArcPath}
             color={mergedConfig.circleColor}
-            transform={[{translateX: radius}, {translateY: radius}]}
+            transform={[{ translateX: radius }, { translateY: radius }]}
           />
+
+          {/* <Path */}
+          {/*   path={clipPath} */}
+          {/*   color={mergedConfig.circleColor} */}
+          {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
+          {/* /> */}
+          <Group
+            clip={clipPath}
+            transform={[{ translateY: (1 - fillPercent) * height }, 
+              { translateX: waveGroupXPosition }
+
+            ]}
+          >
+            {/*       fillCircleGroup.append("circle") */}
+            {/* .attr("cx", radius) */}
+            {/* .attr("cy", radius) */}
+            {/* .attr("r", fillCircleRadius) */}
+            {/* .style("fill", config.waveColor); */}
+
+            <Circle
+              cx={radius}
+              cy={radius}
+              r={fillCircleRadius}
+              color={mergedConfig.waveColor}
+              transform={[{ translateY: - (1 - fillPercent) * height }, 
+
+              { translateX: - waveGroupXPosition }
+              ]}
+            />
+          </Group>
         </Group>
       </Canvas>
     </View>
