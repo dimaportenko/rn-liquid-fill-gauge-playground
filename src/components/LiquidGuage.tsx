@@ -219,9 +219,7 @@ export const LiquidGuage = ({
           {/*   color={mergedConfig.circleColor} */}
           {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
           {/* /> */}
-          <Group
-            clip={clipPath}
-          >
+          <Group clip={clipPath}>
             {/*       fillCircleGroup.append("circle") */}
             {/* .attr("cx", radius) */}
             {/* .attr("cy", radius) */}
@@ -234,12 +232,10 @@ export const LiquidGuage = ({
               r={fillCircleRadius}
               color={mergedConfig.waveColor}
             />
-          {/* <Text x={0} y={20} text="20%" font={font} /> */}
+            {/* <Text x={0} y={20} text="20%" font={font} /> */}
           </Group>
-
         </Group>
       </Canvas>
     </View>
   );
 };
-
