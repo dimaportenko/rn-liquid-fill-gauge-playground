@@ -5,9 +5,21 @@ import {
   Path,
   Skia,
   Text,
+  runTiming,
+  useClockValue,
+  useComputedValue,
+  useValue,
 } from "@shopify/react-native-skia";
 import { arc, area, scaleLinear } from "d3";
+import { useEffect } from "react";
 import { Platform, View } from "react-native";
+
+import {
+  useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 
 // const fontFamily = Platform.select({ ios: "Helvetica", default: "serif" });
 // const fontStyle = {
@@ -120,8 +132,8 @@ type Props = {
 
 export const LiquidGuage = ({
   config,
-  width = 100,
-  height = 100,
+  width = 150,
+  height = 150,
   value = 50,
 }: Props) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
@@ -202,10 +214,37 @@ export const LiquidGuage = ({
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
   // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
 
-  clipPath.offset(waveGroupXPosition, (1 - fillPercent) * height);
+  clipPath.offset(0, (1 - fillPercent) * height);
+
+  const translateYPercent = useValue(0);
+  const translateXProgress = useValue(0);
+
+  useEffect(() => {
+    runTiming(translateYPercent, fillPercent, {
+      duration: mergedConfig.waveRiseTime,
+    });
+    runTiming(
+      translateXProgress,
+      { from: 0, to: 1, loop: true },
+      { duration: mergedConfig.waveAnimateTime },
+    );
+  }, [fillPercent]);
+
+  const path = useComputedValue(() => {
+    const p = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
+    const m = Skia.Matrix();
+    m.translate(
+      waveGroupXPosition + waveLength * translateXProgress.current,
+      (1 - translateYPercent.current) * height,
+    );
+    // m.rotate(clock.current / 2000);
+    // m.translate(-c.x, -c.y);
+    p.transform(m);
+    return p;
+  }, [translateXProgress, translateYPercent]);
 
   return (
-    <View className="flex-1 items-center justify-center">
+    <View className="pb-5">
       <Canvas style={{ width, height }}>
         <Group>
           <Path
@@ -219,7 +258,7 @@ export const LiquidGuage = ({
           {/*   color={mergedConfig.circleColor} */}
           {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
           {/* /> */}
-          <Group clip={clipPath}>
+          <Group clip={path}>
             {/*       fillCircleGroup.append("circle") */}
             {/* .attr("cx", radius) */}
             {/* .attr("cy", radius) */}

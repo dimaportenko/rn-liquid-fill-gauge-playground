@@ -3,7 +3,7 @@ import { LiquidGuage } from "../../components/LiquidGuage";
 
 export default function HomeScreen() {
   return (
-    <View className="flex-1">
+    <View className="flex-1 flex-row flex-wrap justify-around pt-20">
       <LiquidGuage value={55} />
       <LiquidGuage
         config={{
@@ -67,7 +67,8 @@ export default function HomeScreen() {
       />
 
       <LiquidGuage
-        value={120}
+        // value={120}
+        value={70}
         config={{
           circleThickness: 0.4,
           circleColor: "#6DA398",
@@ -76,13 +77,13 @@ export default function HomeScreen() {
           waveColor: "#246D5F",
           textVertPosition: 0.52,
           waveAnimateTime: 5000,
-          waveHeight: 0,
+          // waveHeight: 0,
           waveAnimate: false,
           waveCount: 2,
           waveOffset: 0.25,
           textSize: 1.2,
-          minValue: 30,
-          maxValue: 150,
+          // minValue: 30,
+          // maxValue: 150,
           displayPercent: false,
         }}
       />
