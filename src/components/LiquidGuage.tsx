@@ -83,52 +83,6 @@ type Props = {
   height?: number;
   value?: number;
 };
-//
-// var gaugeGroup = gauge.append("g")
-//     .attr('transform','translate('+locationX+','+locationY+')');
-//
-// // Draw the outer circle.
-// var gaugeCircleArc = d3.svg.arc()
-//     .startAngle(gaugeCircleX(0))
-//     .endAngle(gaugeCircleX(1))
-//     .outerRadius(gaugeCircleY(radius))
-//     .innerRadius(gaugeCircleY(radius-circleThickness));
-// gaugeGroup.append("path")
-//     .attr("d", gaugeCircleArc)
-//     .style("fill", config.circleColor)
-//     .attr('transform','translate('+radius+','+radius+')');
-//
-
-// const start = Skia.Path.MakeFromSVGString(createAnimatedPath(current))!;
-// const lineGenerator = line().curve(curveBasis);
-// const wavePath = lineGenerator(d3Points);
-// return `${wavePath} L ${size}, ${size} 0, ${size} Z`;
-
-// // The clipping wave area.
-// var clipArea = d3.svg.area()
-//     .x(function(d) { return waveScaleX(d.x); } )
-//     .y0(function(d) { return waveScaleY(Math.sin(Math.PI*2*config.waveOffset*-1 + Math.PI*2*(1-config.waveCount) + d.y*2*Math.PI));} )
-//     .y1(function(d) { return (fillCircleRadius*2 + waveHeight); } );
-// var waveGroup = gaugeGroup.append("defs")
-//     .append("clipPath")
-//     .attr("id", "clipWave" + elementId);
-// var wave = waveGroup.append("path")
-//     .datum(data)
-//     .attr("d", clipArea)
-//     .attr("T", 0);
-//
-// // The inner circle with the clipping wave attached.
-// var fillCircleGroup = gaugeGroup.append("g")
-//     .attr("clip-path", "url(#clipWave" + elementId + ")");
-// fillCircleGroup.append("circle")
-//     .attr("cx", radius)
-//     .attr("cy", radius)
-//     .attr("r", fillCircleRadius)
-//     .style("fill", config.waveColor);
-//
-// var waveGroupXPosition = fillCircleMargin+fillCircleRadius*2-waveClipWidth;
-//
-// waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
 
 export const LiquidGuage = ({
   config,
@@ -165,44 +119,44 @@ export const LiquidGuage = ({
   var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
   // Data for building the clip wave area.
-  var data = [];
+  var data: Array<[number, y: number]> = [];
   for (var i = 0; i <= 40 * waveClipCount; i++) {
-    data.push({ x: i / (40 * waveClipCount), y: i / 40 });
+    data.push([i / (40 * waveClipCount), i / 40]);
   }
 
-  const gaugeCircleX = scaleLinear()
-    .range([0, 2 * Math.PI])
-    .domain([0, 1]);
-  const gaugeCircleY = scaleLinear().range([0, radius]).domain([0, radius]);
+  // const gaugeCircleX = scaleLinear()
+  //   .range([0, 2 * Math.PI])
+  //   .domain([0, 1]);
+  // const gaugeCircleY = scaleLinear().range([0, radius]).domain([0, radius]);
 
   const waveScaleX = scaleLinear().range([0, waveClipWidth]).domain([0, 1]);
   var waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
 
   var waveRiseScale = scaleLinear();
 
-  const gaugeCircleArc = arc()
-    .startAngle(gaugeCircleX(0))
-    .endAngle(gaugeCircleX(1))
-    .outerRadius(gaugeCircleY(radius))
-    .innerRadius(gaugeCircleY(radius - circleThickness));
+  // const gaugeCircleArc = arc()
+  //   .startAngle(gaugeCircleX(0))
+  //   .endAngle(gaugeCircleX(1))
+  //   .outerRadius(gaugeCircleY(radius))
+  //   .innerRadius(gaugeCircleY(radius - circleThickness));
 
   // console.log("arc", gaugeCircleArc());
-  const gaugeCircleArcPath = Skia.Path.MakeFromSVGString(gaugeCircleArc())!;
+  // const gaugeCircleArcPath = Skia.Path.MakeFromSVGString(gaugeCircleArc())!;
 
   const clipArea = area()
     .x(function (d) {
-      return waveScaleX(d.x);
+      return waveScaleX(d[0]);
     })
     .y0(function (d) {
       return waveScaleY(
         Math.sin(
           Math.PI * 2 * mergedConfig.waveOffset * -1 +
             Math.PI * 2 * (1 - mergedConfig.waveCount) +
-            d.y * 2 * Math.PI,
+            d[1] * 2 * Math.PI,
         ),
       );
     })
-    .y1(function (d) {
+    .y1(function (_d) {
       return fillCircleRadius * 2 + waveHeight;
     });
 
@@ -223,12 +177,17 @@ export const LiquidGuage = ({
     runTiming(translateYPercent, fillPercent, {
       duration: mergedConfig.waveRiseTime,
     });
-    runTiming(
-      translateXProgress,
-      { from: 0, to: 1, loop: true },
-      { duration: mergedConfig.waveAnimateTime },
-    );
   }, [fillPercent]);
+
+  useEffect(() => {
+    if (mergedConfig.waveAnimate) {
+      runTiming(
+        translateXProgress,
+        { from: 0, to: 1, loop: true },
+        { duration: mergedConfig.waveAnimateTime },
+      );
+    }
+  }, [mergedConfig.waveAnimate]);
 
   const path = useComputedValue(() => {
     const p = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
@@ -247,11 +206,22 @@ export const LiquidGuage = ({
     <View className="pb-5">
       <Canvas style={{ width, height }}>
         <Group>
-          <Path
-            path={gaugeCircleArcPath}
+          <Circle
+            cx={radius}
+            cy={radius}
+            r={radius - circleThickness * 0.5}
+            // opacity={0.5}
             color={mergedConfig.circleColor}
-            transform={[{ translateX: radius }, { translateY: radius }]}
+            // color="black"
+            style="stroke"
+            strokeWidth={circleThickness}
           />
+          {/* <Path */}
+          {/*   path={gaugeCircleArcPath} */}
+          {/*   color={mergedConfig.circleColor} */}
+          {/*   transform={[{ translateX: radius }, { translateY: radius }]} */}
+          {/*   opacity={0.5} */}
+          {/* /> */}
 
           {/* <Path */}
           {/*   path={clipPath} */}
