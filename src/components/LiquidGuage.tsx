@@ -4,7 +4,7 @@ import {
   Group,
   Path,
   Skia,
-  Text,
+  // Text,
 } from "@shopify/react-native-skia";
 import { arc, area, scaleLinear } from "d3";
 import { Platform, View } from "react-native";
@@ -195,6 +195,27 @@ export const LiquidGuage = ({
     });
 
   const clipPath = Skia.Path.MakeFromSVGString(clipArea(data))!;
+
+    const clipArea1 = area()
+    .x(function (d) {
+      return waveScaleX(d.x);
+    // return d.x
+    })
+    .y0(function (d) {
+      return waveScaleY(
+        Math.sin(
+          Math.PI * 2 * mergedConfig.waveOffset * -1 +
+            Math.PI * 2 * (1 - mergedConfig.waveCount) +
+            d.y * 2 * Math.PI,
+        ),
+      );
+    })
+    .y1(function (d) {
+      return fillCircleRadius * 2 + waveHeight;
+    });
+
+  const clipPath1 = Skia.Path.MakeFromSVGString(clipArea1(data))!;
+
   // const clipTraslateY = waveRiseScale(fillPercent);
 
   // const clipAreaPath = Skia.Path.MakeFromSVGString(clipArea())!;
@@ -203,6 +224,7 @@ export const LiquidGuage = ({
   // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
 
   clipPath.offset(waveGroupXPosition, (1 - fillPercent) * height);
+  clipPath1.offset(waveGroupXPosition + waveLength * 0.25, (1 - fillPercent) * height);
 
   return (
     <View className="flex-1 items-center justify-center">
@@ -214,26 +236,18 @@ export const LiquidGuage = ({
             transform={[{ translateX: radius }, { translateY: radius }]}
           />
 
-          {/* <Path */}
-          {/*   path={clipPath} */}
-          {/*   color={mergedConfig.circleColor} */}
-          {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
-          {/* /> */}
-          <Group clip={clipPath}>
-            {/*       fillCircleGroup.append("circle") */}
-            {/* .attr("cx", radius) */}
-            {/* .attr("cy", radius) */}
-            {/* .attr("r", fillCircleRadius) */}
-            {/* .style("fill", config.waveColor); */}
+          <Path 
+            path={clipPath} 
+            color={mergedConfig.waveColor} 
+            opacity={0.5}
+          />
+          
 
-            <Circle
-              cx={radius}
-              cy={radius}
-              r={fillCircleRadius}
-              color={mergedConfig.waveColor}
-            />
-            {/* <Text x={0} y={20} text="20%" font={font} /> */}
-          </Group>
+          <Path 
+            path={clipPath1} 
+            color={mergedConfig.textColor} 
+            opacity={0.5}
+          />
         </Group>
       </Canvas>
     </View>
