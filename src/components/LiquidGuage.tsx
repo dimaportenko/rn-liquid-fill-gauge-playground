@@ -1,6 +1,21 @@
-import { Canvas, Circle, Group, Path, Skia } from "@shopify/react-native-skia";
+import {
+  Canvas,
+  Circle,
+  Group,
+  Path,
+  Skia,
+  Text,
+} from "@shopify/react-native-skia";
 import { arc, area, scaleLinear } from "d3";
-import { View, Text } from "react-native";
+import { Platform, View } from "react-native";
+
+// const fontFamily = Platform.select({ ios: "Helvetica", default: "serif" });
+// const fontStyle = {
+//   fontFamily,
+//   fontSize: 14,
+//   fontStyle: "italic",
+//   fontWeight: "bold",
+// };
 
 export type GaugeConfig = {
   minValue: number;
@@ -105,8 +120,8 @@ type Props = {
 
 export const LiquidGuage = ({
   config,
-  width = 200,
-  height = 200,
+  width = 100,
+  height = 100,
   value = 50,
 }: Props) => {
   const defaultConfig = liquidFillGaugeDefaultSettings();
@@ -178,13 +193,16 @@ export const LiquidGuage = ({
     .y1(function (d) {
       return fillCircleRadius * 2 + waveHeight;
     });
+
   const clipPath = Skia.Path.MakeFromSVGString(clipArea(data))!;
-  const clipTraslateY = waveRiseScale(fillPercent);
+  // const clipTraslateY = waveRiseScale(fillPercent);
 
   // const clipAreaPath = Skia.Path.MakeFromSVGString(clipArea())!;
   var waveGroupXPosition =
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
   // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
+
+  clipPath.offset(waveGroupXPosition, (1 - fillPercent) * height);
 
   return (
     <View className="flex-1 items-center justify-center">
@@ -203,10 +221,6 @@ export const LiquidGuage = ({
           {/* /> */}
           <Group
             clip={clipPath}
-            transform={[{ translateY: (1 - fillPercent) * height }, 
-              { translateX: waveGroupXPosition }
-
-            ]}
           >
             {/*       fillCircleGroup.append("circle") */}
             {/* .attr("cx", radius) */}
@@ -219,14 +233,13 @@ export const LiquidGuage = ({
               cy={radius}
               r={fillCircleRadius}
               color={mergedConfig.waveColor}
-              transform={[{ translateY: - (1 - fillPercent) * height }, 
-
-              { translateX: - waveGroupXPosition }
-              ]}
             />
+          {/* <Text x={0} y={20} text="20%" font={font} /> */}
           </Group>
+
         </Group>
       </Canvas>
     </View>
   );
 };
+
