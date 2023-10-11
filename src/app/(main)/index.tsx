@@ -12,6 +12,7 @@ function generateValue() {
 
 export default function HomeScreen() {
   const [values, setValues] = useState([55, 28, 60, 50, 60.44, 70])
+  // const [values, setValues] = useState([1, 1, 1, 99, 99.44, 97])
 
   const updateValues = () => {
     setValues([

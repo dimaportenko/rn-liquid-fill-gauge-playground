@@ -125,25 +125,10 @@ export const LiquidGuage = ({
   for (var i = 0; i <= 40 * waveClipCount; i++) {
     data.push([i / (40 * waveClipCount), i / 40]);
   }
-
-  // const gaugeCircleX = scaleLinear()
-  //   .range([0, 2 * Math.PI])
-  //   .domain([0, 1]);
-  // const gaugeCircleY = scaleLinear().range([0, radius]).domain([0, radius]);
+  // console.log(data)
 
   const waveScaleX = scaleLinear().range([0, waveClipWidth]).domain([0, 1]);
-  var waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
-
-  var waveRiseScale = scaleLinear();
-
-  // const gaugeCircleArc = arc()
-  //   .startAngle(gaugeCircleX(0))
-  //   .endAngle(gaugeCircleX(1))
-  //   .outerRadius(gaugeCircleY(radius))
-  //   .innerRadius(gaugeCircleY(radius - circleThickness));
-
-  // console.log("arc", gaugeCircleArc());
-  // const gaugeCircleArcPath = Skia.Path.MakeFromSVGString(gaugeCircleArc())!;
+  const waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
 
   const clipArea = area()
     .x(function (d) {
@@ -159,7 +144,7 @@ export const LiquidGuage = ({
       );
     })
     .y1(function (_d) {
-      return fillCircleRadius * 2 + waveHeight;
+      return fillCircleRadius * 2 + waveHeight * 5;
     });
 
   // const clipPath = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
@@ -207,15 +192,15 @@ export const LiquidGuage = ({
 
   const text = useComputedValue(() => {
     // @ts-ignore
-    return `${parseFloat(textValue.current).toFixed(0)}%`
-  }, [textValue])
+    return `${parseFloat(textValue.current).toFixed(0)}%`;
+  }, [textValue]);
 
   const path = useComputedValue(() => {
     const p = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
     const m = Skia.Matrix();
     m.translate(
       waveGroupXPosition + waveLength * translateXProgress.current,
-      (1 - translateYPercent.current) * height,
+      fillCircleMargin + (1 - translateYPercent.current) * fillCircleRadius * 2,
     );
     // m.rotate(clock.current / 2000);
     // m.translate(-c.x, -c.y);
@@ -244,21 +229,18 @@ export const LiquidGuage = ({
           {/*   opacity={0.5} */}
           {/* /> */}
 
-          {/* <Path */}
-          {/*   path={clipPath} */}
-          {/*   color={mergedConfig.circleColor} */}
-          {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
-          {/* /> */}
+          {/* <Path path={path} color={mergedConfig.circleColor} opacity={0.5} /> */}
+
           <Text
             x={0}
             y={textPixels}
             text={text}
             font={font}
             color={mergedConfig.textColor}
-              transform={[
-                { translateX: radius - textWidth * 0.5 },
-                { translateY: radius - textPixels * 0.75 },
-              ]}
+            transform={[
+              { translateX: radius - textWidth * 0.5 },
+              { translateY: radius - textPixels * 0.75 },
+            ]}
           />
 
           <Group clip={path}>
