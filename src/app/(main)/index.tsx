@@ -1,10 +1,32 @@
-import { View, Text } from "react-native";
+import { View, Text, Button } from "react-native";
 import { LiquidGuage } from "../../components/LiquidGuage";
+import { useState } from "react";
+
+function generateValue() {
+  // if (Math.random() > 0.5) {
+    return Math.round(Math.random() * 100);
+  // } else {
+  //   return (Math.random() * 100).toFixed(1) as number;
+  // }
+}
 
 export default function HomeScreen() {
+  const [values, setValues] = useState([55, 28, 60, 50, 60.44, 70])
+
+  const updateValues = () => {
+    setValues([
+      generateValue(),
+      generateValue(),
+      generateValue(),
+      generateValue(),
+      generateValue(),
+      generateValue(),
+    ])
+  }
+
   return (
     <View className="flex-1 flex-row flex-wrap justify-around pt-20">
-      <LiquidGuage value={55} />
+      <LiquidGuage value={values[0]} />
       <LiquidGuage
         config={{
           circleColor: "#FF7777",
@@ -15,7 +37,7 @@ export default function HomeScreen() {
           textVertPosition: 0.2,
           waveAnimateTime: 1000,
         }}
-        value={28}
+        value={values[1]}
       />
       <LiquidGuage
         config={{
@@ -30,11 +52,11 @@ export default function HomeScreen() {
           waveHeight: 0.3,
           waveCount: 1,
         }}
-        value={60}
+        value={values[2]}
       />
 
       <LiquidGuage
-        value={50}
+        value={values[3]}
         config={{
           textVertPosition: 0.8,
           waveAnimateTime: 5000,
@@ -47,7 +69,7 @@ export default function HomeScreen() {
       />
 
       <LiquidGuage
-        value={60.44}
+        value={values[4]}
         config={{
           circleThickness: 0.15,
           circleColor: "#808015",
@@ -68,7 +90,7 @@ export default function HomeScreen() {
 
       <LiquidGuage
         // value={120}
-        value={70}
+        value={values[5]}
         config={{
           circleThickness: 0.4,
           circleColor: "#6DA398",
@@ -87,6 +109,8 @@ export default function HomeScreen() {
           displayPercent: false,
         }}
       />
+
+      <Button title="Update" onPress={updateValues} />
     </View>
   );
 }

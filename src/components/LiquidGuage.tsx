@@ -172,12 +172,14 @@ export const LiquidGuage = ({
 
   // clipPath.offset(0, (1 - fillPercent) * height);
   const font = useFont(
-    require("../../assets/fonts/SpaceMono-Regular.ttf"),
+    require("../../assets/fonts/Roboto-Bold.ttf"),
     textPixels,
   );
-  const text = `${value}%`;
-  const textWidth = font?.getTextWidth(text) ?? 0;
+  // @ts-ignore
+  const endText = `${parseFloat(value).toFixed(0)}%`;
+  const textWidth = font?.getTextWidth(endText) ?? 0;
 
+  const textValue = useValue(0);
   const translateYPercent = useValue(0);
   const translateXProgress = useValue(0);
 
@@ -188,6 +190,12 @@ export const LiquidGuage = ({
   }, [fillPercent]);
 
   useEffect(() => {
+    runTiming(textValue, value, {
+      duration: mergedConfig.waveRiseTime,
+    });
+  }, [value]);
+
+  useEffect(() => {
     if (mergedConfig.waveAnimate) {
       runTiming(
         translateXProgress,
@@ -196,6 +204,11 @@ export const LiquidGuage = ({
       );
     }
   }, [mergedConfig.waveAnimate]);
+
+  const text = useComputedValue(() => {
+    // @ts-ignore
+    return `${parseFloat(textValue.current).toFixed(0)}%`
+  }, [textValue])
 
   const path = useComputedValue(() => {
     const p = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
