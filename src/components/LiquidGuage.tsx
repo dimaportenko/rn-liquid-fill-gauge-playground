@@ -9,6 +9,7 @@ import {
   useClockValue,
   useComputedValue,
   useValue,
+  useFont,
 } from "@shopify/react-native-skia";
 import { arc, area, scaleLinear } from "d3";
 import { useEffect } from "react";
@@ -118,6 +119,7 @@ export const LiquidGuage = ({
   var waveClipWidth = waveLength * waveClipCount;
   var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
+  var textPixels = (mergedConfig.textSize * radius) / 2;
   // Data for building the clip wave area.
   var data: Array<[number, y: number]> = [];
   for (var i = 0; i <= 40 * waveClipCount; i++) {
@@ -160,7 +162,7 @@ export const LiquidGuage = ({
       return fillCircleRadius * 2 + waveHeight;
     });
 
-  const clipPath = Skia.Path.MakeFromSVGString(clipArea(data))!;
+  // const clipPath = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
   // const clipTraslateY = waveRiseScale(fillPercent);
 
   // const clipAreaPath = Skia.Path.MakeFromSVGString(clipArea())!;
@@ -168,7 +170,13 @@ export const LiquidGuage = ({
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
   // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
 
-  clipPath.offset(0, (1 - fillPercent) * height);
+  // clipPath.offset(0, (1 - fillPercent) * height);
+  const font = useFont(
+    require("../../assets/fonts/SpaceMono-Regular.ttf"),
+    textPixels,
+  );
+  const text = `${value}%`;
+  const textWidth = font?.getTextWidth(text) ?? 0;
 
   const translateYPercent = useValue(0);
   const translateXProgress = useValue(0);
@@ -228,6 +236,18 @@ export const LiquidGuage = ({
           {/*   color={mergedConfig.circleColor} */}
           {/*   transform={[{ translateY: (1 - fillPercent) * height }]} */}
           {/* /> */}
+          <Text
+            x={0}
+            y={textPixels}
+            text={text}
+            font={font}
+            color={mergedConfig.textColor}
+              transform={[
+                { translateX: radius - textWidth * 0.5 },
+                { translateY: radius - textPixels * 0.75 },
+              ]}
+          />
+
           <Group clip={path}>
             {/*       fillCircleGroup.append("circle") */}
             {/* .attr("cx", radius) */}
@@ -241,7 +261,18 @@ export const LiquidGuage = ({
               r={fillCircleRadius}
               color={mergedConfig.waveColor}
             />
-            {/* <Text x={0} y={20} text="20%" font={font} /> */}
+
+            <Text
+              x={0}
+              y={textPixels}
+              text={text}
+              font={font}
+              color={mergedConfig.waveTextColor}
+              transform={[
+                { translateX: radius - textWidth * 0.5 },
+                { translateY: radius - textPixels * 0.75 },
+              ]}
+            />
           </Group>
         </Group>
       </Canvas>
