@@ -84,10 +84,10 @@ export const LiquidGuage = ({
   const defaultConfig = liquidFillGaugeDefaultSettings();
   const mergedConfig = { ...defaultConfig, ...config };
 
-  var fillPercent =
+  const fillPercent =
     Math.max(mergedConfig.minValue, Math.min(mergedConfig.maxValue, value)) /
     mergedConfig.maxValue;
-  var waveHeightScale;
+  let waveHeightScale;
   if (mergedConfig.waveHeightScaling) {
     waveHeightScale = scaleLinear()
       .range([0, mergedConfig.waveHeight, 0])
@@ -98,24 +98,24 @@ export const LiquidGuage = ({
       .domain([0, 100]);
   }
 
-  var radius = Math.min(width, height) / 2;
-  var circleThickness = mergedConfig.circleThickness * radius;
+  const radius = Math.min(width, height) / 2;
+  const circleThickness = mergedConfig.circleThickness * radius;
 
-  var waveClipCount = 1 + mergedConfig.waveCount;
-  var circleFillGap = mergedConfig.circleFillGap * radius;
-  var fillCircleMargin = circleThickness + circleFillGap;
-  var fillCircleRadius = radius - fillCircleMargin;
-  var waveLength = (fillCircleRadius * 2) / mergedConfig.waveCount;
-  var waveClipWidth = waveLength * waveClipCount;
-  var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
+  const waveClipCount = 1 + mergedConfig.waveCount;
+  const circleFillGap = mergedConfig.circleFillGap * radius;
+  const fillCircleMargin = circleThickness + circleFillGap;
+  const fillCircleRadius = radius - fillCircleMargin;
+  const waveLength = (fillCircleRadius * 2) / mergedConfig.waveCount;
+  const waveClipWidth = waveLength * waveClipCount;
+  const waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
-  var textPixels = (mergedConfig.textSize * radius) / 2;
-  var textFinalValue = Number(value.toFixed(mergedConfig.toFixed));
-  var textStartValue = mergedConfig.valueCountUp
+  const textPixels = (mergedConfig.textSize * radius) / 2;
+  const textFinalValue = Number(value.toFixed(mergedConfig.toFixed));
+  const textStartValue = mergedConfig.valueCountUp
     ? mergedConfig.minValue
     : textFinalValue;
   // Scale for controlling the position of the text within the gauge.
-  var textRiseScaleY = scaleLinear()
+  const textRiseScaleY = scaleLinear()
     .range([
       fillCircleMargin + fillCircleRadius * 2,
       fillCircleMargin + textPixels * 0.7,
@@ -123,8 +123,8 @@ export const LiquidGuage = ({
     .domain([0, 1]);
 
   // Data for building the clip wave area.
-  var data: Array<[number, number]> = [];
-  for (var i = 0; i <= 40 * waveClipCount; i++) {
+  const data: Array<[number, number]> = [];
+  for (let i = 0; i <= 40 * waveClipCount; i++) {
     data.push([i / (40 * waveClipCount), i / 40]);
   }
 
@@ -148,7 +148,7 @@ export const LiquidGuage = ({
       return fillCircleRadius * 2 + waveHeight * 5;
     });
 
-  var waveGroupXPosition =
+  const waveGroupXPosition =
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
 
   const font = useFont(

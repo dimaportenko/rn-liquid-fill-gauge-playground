@@ -6,7 +6,7 @@
 - [x] use min, max value and original example value
 - [x] show hide % 
 - [x] check other config params
-- [ ] refactoring 
+- [x] refactoring 
 - [ ] check performance on Android
 
 - [ ] create library
