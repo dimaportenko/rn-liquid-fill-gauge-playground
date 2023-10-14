@@ -2,18 +2,13 @@ import {
   Canvas,
   Circle,
   Group,
-  Path,
   Skia,
   Text,
-  runTiming,
-  useClockValue,
-  useComputedValue,
-  useValue,
   useFont,
 } from "@shopify/react-native-skia";
-import { arc, area, scaleLinear } from "d3";
+import { area, scaleLinear } from "d3";
 import { useEffect } from "react";
-import { Platform, View } from "react-native";
+import { View } from "react-native";
 
 import {
   Easing,
@@ -22,14 +17,6 @@ import {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-
-// const fontFamily = Platform.select({ ios: "Helvetica", default: "serif" });
-// const fontStyle = {
-//   fontFamily,
-//   fontSize: 14,
-//   fontStyle: "italic",
-//   fontWeight: "bold",
-// };
 
 export type GaugeConfig = {
   minValue: number;
@@ -121,12 +108,12 @@ export const LiquidGuage = ({
   var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
   var textPixels = (mergedConfig.textSize * radius) / 2;
+
   // Data for building the clip wave area.
   var data: Array<[number, number]> = [];
   for (var i = 0; i <= 40 * waveClipCount; i++) {
     data.push([i / (40 * waveClipCount), i / 40]);
   }
-  // console.log(data)
 
   const waveScaleX = scaleLinear().range([0, waveClipWidth]).domain([0, 1]);
   const waveScaleY = scaleLinear().range([0, waveHeight]).domain([0, 1]);
@@ -148,27 +135,16 @@ export const LiquidGuage = ({
       return fillCircleRadius * 2 + waveHeight * 5;
     });
 
-  // const clipPath = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
-  // const clipTraslateY = waveRiseScale(fillPercent);
-
-  // const clipAreaPath = Skia.Path.MakeFromSVGString(clipArea())!;
   var waveGroupXPosition =
     fillCircleMargin + fillCircleRadius * 2 - waveClipWidth;
-  // waveGroup.attr('transform','translate('+waveGroupXPosition+','+waveRiseScale(fillPercent)+')');
 
-  // clipPath.offset(0, (1 - fillPercent) * height);
   const font = useFont(
     require("../../assets/fonts/Roboto-Bold.ttf"),
     textPixels,
   );
-  // @ts-ignore
-  const endText = `${parseFloat(value).toFixed(0)}%`;
-  const textWidth = font?.getTextWidth(endText) ?? 0;
 
-  // const textValue = useValue(0);
   const textValue = useSharedValue(0);
   const translateYPercent = useSharedValue(0);
-  // const translateYPercent = useDerivedValue(0);
   const translateXProgress = useSharedValue(0);
 
   useEffect(() => {
@@ -195,12 +171,15 @@ export const LiquidGuage = ({
     }
   }, [mergedConfig.waveAnimate]);
 
-  // const text = useComputedValue(() => {
   const text = useDerivedValue(() => {
-    return `${parseFloat(textValue.value.toString()).toFixed(0)}%`;
+    return `${textValue.value.toFixed(0)}%`;
   }, [textValue]);
 
-  // const path = useDerivedValue
+  const textTranslateX = useDerivedValue(() => {
+    const textWidth = font?.getTextWidth(text.value) ?? 0;
+    return radius - textWidth * 0.5;
+  }, [text, radius, font]);
+
   const clipSVGString = clipArea(data)!;
   const path = useDerivedValue(() => {
     const p = Skia.Path.MakeFromSVGString(clipSVGString)!;
@@ -230,13 +209,13 @@ export const LiquidGuage = ({
           {/* <Path path={path} color={mergedConfig.circleColor} opacity={0.5} /> */}
 
           <Text
-            x={0}
+            x={textTranslateX}
             y={textPixels}
             text={text}
             font={font}
             color={mergedConfig.textColor}
             transform={[
-              { translateX: radius - textWidth * 0.5 },
+              // { translateX: textTranslateX.value },
               { translateY: radius - textPixels * 0.75 },
             ]}
           />
@@ -250,13 +229,13 @@ export const LiquidGuage = ({
             />
 
             <Text
-              x={0}
+              x={textTranslateX}
               y={textPixels}
               text={text}
               font={font}
               color={mergedConfig.waveTextColor}
               transform={[
-                { translateX: radius - textWidth * 0.5 },
+                // { translateX: textTranslateX.value },
                 { translateY: radius - textPixels * 0.75 },
               ]}
             />
