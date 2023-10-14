@@ -1,5 +1,6 @@
 {
   "commands": {
-    "run:clear": "bunx expo start --clear"
+    "run:clear": "bunx expo start --clear",
+    "run": "bunx expo start"
    }
 }

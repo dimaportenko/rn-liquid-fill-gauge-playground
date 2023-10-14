@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import { Platform, View } from "react-native";
 
 import {
+  Easing,
   useDerivedValue,
   useSharedValue,
   withRepeat,
@@ -121,7 +122,7 @@ export const LiquidGuage = ({
 
   var textPixels = (mergedConfig.textSize * radius) / 2;
   // Data for building the clip wave area.
-  var data: Array<[number, y: number]> = [];
+  var data: Array<[number, number]> = [];
   for (var i = 0; i <= 40 * waveClipCount; i++) {
     data.push([i / (40 * waveClipCount), i / 40]);
   }
@@ -164,49 +165,53 @@ export const LiquidGuage = ({
   const endText = `${parseFloat(value).toFixed(0)}%`;
   const textWidth = font?.getTextWidth(endText) ?? 0;
 
-  const textValue = useValue(0);
-  const translateYPercent = useValue(0);
-  const translateXProgress = useValue(0);
+  // const textValue = useValue(0);
+  const textValue = useSharedValue(0);
+  const translateYPercent = useSharedValue(0);
+  // const translateYPercent = useDerivedValue(0);
+  const translateXProgress = useSharedValue(0);
 
   useEffect(() => {
-    runTiming(translateYPercent, fillPercent, {
+    translateYPercent.value = withTiming(fillPercent, {
       duration: mergedConfig.waveRiseTime,
     });
   }, [fillPercent]);
 
   useEffect(() => {
-    runTiming(textValue, value, {
+    textValue.value = withTiming(value, {
       duration: mergedConfig.waveRiseTime,
     });
   }, [value]);
 
   useEffect(() => {
     if (mergedConfig.waveAnimate) {
-      runTiming(
-        translateXProgress,
-        { from: 0, to: 1, loop: true },
-        { duration: mergedConfig.waveAnimateTime },
+      translateXProgress.value = withRepeat(
+        withTiming(1, {
+          duration: mergedConfig.waveAnimateTime,
+          easing: Easing.linear,
+        }),
+        -1,
       );
     }
   }, [mergedConfig.waveAnimate]);
 
-  const text = useComputedValue(() => {
-    // @ts-ignore
-    return `${parseFloat(textValue.current).toFixed(0)}%`;
+  // const text = useComputedValue(() => {
+  const text = useDerivedValue(() => {
+    return `${parseFloat(textValue.value.toString()).toFixed(0)}%`;
   }, [textValue]);
 
-  const path = useComputedValue(() => {
-    const p = Skia.Path.MakeFromSVGString(clipArea(data)!)!;
+  // const path = useDerivedValue
+  const clipSVGString = clipArea(data)!;
+  const path = useDerivedValue(() => {
+    const p = Skia.Path.MakeFromSVGString(clipSVGString)!;
     const m = Skia.Matrix();
     m.translate(
-      waveGroupXPosition + waveLength * translateXProgress.current,
-      fillCircleMargin + (1 - translateYPercent.current) * fillCircleRadius * 2,
+      waveGroupXPosition + waveLength * translateXProgress.value,
+      fillCircleMargin + (1 - translateYPercent.value) * fillCircleRadius * 2,
     );
-    // m.rotate(clock.current / 2000);
-    // m.translate(-c.x, -c.y);
     p.transform(m);
     return p;
-  }, [translateXProgress, translateYPercent]);
+  }, [translateXProgress, translateYPercent, clipSVGString]);
 
   return (
     <View className="pb-5">
@@ -222,13 +227,6 @@ export const LiquidGuage = ({
             style="stroke"
             strokeWidth={circleThickness}
           />
-          {/* <Path */}
-          {/*   path={gaugeCircleArcPath} */}
-          {/*   color={mergedConfig.circleColor} */}
-          {/*   transform={[{ translateX: radius }, { translateY: radius }]} */}
-          {/*   opacity={0.5} */}
-          {/* /> */}
-
           {/* <Path path={path} color={mergedConfig.circleColor} opacity={0.5} /> */}
 
           <Text
@@ -244,12 +242,6 @@ export const LiquidGuage = ({
           />
 
           <Group clip={path}>
-            {/*       fillCircleGroup.append("circle") */}
-            {/* .attr("cx", radius) */}
-            {/* .attr("cy", radius) */}
-            {/* .attr("r", fillCircleRadius) */}
-            {/* .style("fill", config.waveColor); */}
-
             <Circle
               cx={radius}
               cy={radius}
