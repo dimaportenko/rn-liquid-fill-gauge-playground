@@ -114,6 +114,13 @@ export const LiquidGuage = ({
   var textStartValue = mergedConfig.valueCountUp
     ? mergedConfig.minValue
     : textFinalValue;
+  // Scale for controlling the position of the text within the gauge.
+  var textRiseScaleY = scaleLinear()
+    .range([
+      fillCircleMargin + fillCircleRadius * 2,
+      fillCircleMargin + textPixels * 0.7,
+    ])
+    .domain([0, 1]);
 
   // Data for building the clip wave area.
   var data: Array<[number, number]> = [];
@@ -159,10 +166,9 @@ export const LiquidGuage = ({
     });
   }, [fillPercent]);
 
-  console.log("textFinalValue", textFinalValue);
   useEffect(() => {
     textValue.value = withTiming(textFinalValue, {
-      duration: mergedConfig.waveRiseTime,
+      duration: mergedConfig.valueCountUp ? mergedConfig.waveRiseTime : 0,
     });
   }, [textFinalValue]);
 
@@ -179,7 +185,9 @@ export const LiquidGuage = ({
   }, [mergedConfig.waveAnimate]);
 
   const text = useDerivedValue(() => {
-    return `${textValue.value.toFixed(mergedConfig.toFixed)}${mergedConfig.textSuffix}`;
+    return `${textValue.value.toFixed(mergedConfig.toFixed)}${
+      mergedConfig.textSuffix
+    }`;
   }, [textValue]);
 
   const textTranslateX = useDerivedValue(() => {
@@ -198,6 +206,12 @@ export const LiquidGuage = ({
     p.transform(m);
     return p;
   }, [translateXProgress, translateYPercent, clipSVGString]);
+
+  const textTransform = [
+    // { translateX: textTranslateX.value },
+    // { translateY: radius - textPixels * 0.75 },
+    { translateY: textRiseScaleY(mergedConfig.textVertPosition) - textPixels },
+  ];
 
   return (
     <View className="pb-5">
@@ -221,10 +235,7 @@ export const LiquidGuage = ({
             text={text}
             font={font}
             color={mergedConfig.textColor}
-            transform={[
-              // { translateX: textTranslateX.value },
-              { translateY: radius - textPixels * 0.75 },
-            ]}
+            transform={textTransform}
           />
 
           <Group clip={path}>
@@ -241,10 +252,7 @@ export const LiquidGuage = ({
               text={text}
               font={font}
               color={mergedConfig.waveTextColor}
-              transform={[
-                // { translateX: textTranslateX.value },
-                { translateY: radius - textPixels * 0.75 },
-              ]}
+              transform={textTransform}
             />
           </Group>
         </Group>

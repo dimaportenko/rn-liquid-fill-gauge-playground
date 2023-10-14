@@ -5,7 +5,8 @@
 - [ ] ~~use original logic for clipY translate~~ 
 - [x] use min, max value and original example value
 - [x] show hide % 
-- [ ] check other config params
+- [x] check other config params
+- [ ] refactoring 
 - [ ] check performance on Android
 
 - [ ] create library
