@@ -4,14 +4,14 @@ import { useState } from "react";
 
 function generateValue() {
   // if (Math.random() > 0.5) {
-    return Math.round(Math.random() * 100);
+  return Math.round(Math.random() * 100);
   // } else {
   //   return (Math.random() * 100).toFixed(1) as number;
   // }
 }
 
 export default function HomeScreen() {
-  const [values, setValues] = useState([55, 28, 60, 50, 60.44, 70])
+  const [values, setValues] = useState([55, 28, 60, 50, 60.44, 120]);
   // const [values, setValues] = useState([1, 1, 1, 99, 99.44, 97])
 
   const updateValues = () => {
@@ -22,8 +22,8 @@ export default function HomeScreen() {
       generateValue(),
       generateValue(),
       generateValue(),
-    ])
-  }
+    ]);
+  };
 
   return (
     <View className="flex-1 flex-row flex-wrap justify-around pt-20">
@@ -65,7 +65,7 @@ export default function HomeScreen() {
           waveAnimate: false,
           waveOffset: 0.25,
           valueCountUp: false,
-          displayPercent: false,
+          textSuffix: "",
         }}
       />
 
@@ -86,6 +86,7 @@ export default function HomeScreen() {
           waveOffset: 0.25,
           textSize: 0.75,
           waveCount: 3,
+          toFixed: 2,
         }}
       />
 
@@ -100,14 +101,14 @@ export default function HomeScreen() {
           waveColor: "#246D5F",
           textVertPosition: 0.52,
           waveAnimateTime: 5000,
-          // waveHeight: 0,
+          waveHeight: 0,
           waveAnimate: false,
           waveCount: 2,
           waveOffset: 0.25,
           textSize: 1.2,
-          // minValue: 30,
-          // maxValue: 150,
-          displayPercent: false,
+          minValue: 30,
+          maxValue: 150,
+          textSuffix: "",
         }}
       />
 

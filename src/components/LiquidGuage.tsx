@@ -36,9 +36,10 @@ export type GaugeConfig = {
   textVertPosition: number;
   textSize: number;
   valueCountUp: boolean;
-  displayPercent: boolean;
+  textSuffix: string;
   textColor: string;
   waveTextColor: string;
+  toFixed: number;
 };
 
 function liquidFillGaugeDefaultSettings(): GaugeConfig {
@@ -60,9 +61,10 @@ function liquidFillGaugeDefaultSettings(): GaugeConfig {
     textVertPosition: 0.5, // The height at which to display the percentage text withing the wave circle. 0 = bottom, 1 = top.
     textSize: 1, // The relative height of the text to display in the wave circle. 1 = 50%
     valueCountUp: true, // If true, the displayed value counts up from 0 to it's final value upon loading. If false, the final value is displayed.
-    displayPercent: true, // If true, a % symbol is displayed after the value.
+    textSuffix: "%", // If true, a % symbol is displayed after the value.
     textColor: "#045681", // The color of the value text when the wave does not overlap it.
     waveTextColor: "#A4DBf8", // The color of the value text when the wave overlaps it.
+    toFixed: 0,
   };
 }
 
@@ -108,6 +110,10 @@ export const LiquidGuage = ({
   var waveHeight = fillCircleRadius * waveHeightScale(fillPercent * 100);
 
   var textPixels = (mergedConfig.textSize * radius) / 2;
+  var textFinalValue = Number(value.toFixed(mergedConfig.toFixed));
+  var textStartValue = mergedConfig.valueCountUp
+    ? mergedConfig.minValue
+    : textFinalValue;
 
   // Data for building the clip wave area.
   var data: Array<[number, number]> = [];
@@ -143,7 +149,7 @@ export const LiquidGuage = ({
     textPixels,
   );
 
-  const textValue = useSharedValue(0);
+  const textValue = useSharedValue(textStartValue);
   const translateYPercent = useSharedValue(0);
   const translateXProgress = useSharedValue(0);
 
@@ -153,11 +159,12 @@ export const LiquidGuage = ({
     });
   }, [fillPercent]);
 
+  console.log("textFinalValue", textFinalValue);
   useEffect(() => {
-    textValue.value = withTiming(value, {
+    textValue.value = withTiming(textFinalValue, {
       duration: mergedConfig.waveRiseTime,
     });
-  }, [value]);
+  }, [textFinalValue]);
 
   useEffect(() => {
     if (mergedConfig.waveAnimate) {
@@ -172,7 +179,7 @@ export const LiquidGuage = ({
   }, [mergedConfig.waveAnimate]);
 
   const text = useDerivedValue(() => {
-    return `${textValue.value.toFixed(0)}%`;
+    return `${textValue.value.toFixed(mergedConfig.toFixed)}${mergedConfig.textSuffix}`;
   }, [textValue]);
 
   const textTranslateX = useDerivedValue(() => {
